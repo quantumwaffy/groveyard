@@ -1,0 +1,65 @@
+[project]
+name = "groveyard"
+version = "0.0.0"
+description = "Modern async Python library for GrovePi+ sensors and actuators on a Raspberry Pi"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Sasha" }]
+dependencies = []
+
+[project.optional-dependencies]
+# Real-hardware I2C backend. Not needed for development or tests (the fake
+# transport covers everything off-device).
+hardware = ["smbus2>=0.4"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.6",
+    "ty",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# ASYNC (flake8-async): flags blocking calls made from `async` code (time.sleep,
+#   sync I/O) — the library's #1 hazard.
+# ANN: type annotations are mandatory everywhere.
+# D:   docstrings are mandatory (google convention).
+# TID: bans relative imports (absolute imports only).
+# Q:   consistent quotes (and flags avoidable escapes).
+# The rest are general correctness/style/modernization rules.
+select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "SIM", "RUF", "ANN", "D", "TID", "Q"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests keep full type annotations but relax docstrings — test names document intent.
+"tests/*" = ["D"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = [
+    "tests.py",
+    "test_*.py",
+    "tests_*.py",
+    "*_tests.py",
+    "*_test.py",
+]
+
+[tool.ty.environment]
+python-version = "3.12"
