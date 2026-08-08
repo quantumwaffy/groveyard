@@ -9,12 +9,31 @@ against the in-memory fake.
 All ``smbus2`` calls are blocking C-level I/O and therefore run in a worker thread
 via :func:`asyncio.to_thread`; delays use :func:`asyncio.sleep`. The event loop is
 never blocked.
+
+One physical bus, one transport
+--------------------------------
+
+Every safety guarantee in this library — the bus lock, the port registry — is
+scoped to *one* :class:`~groveyard.transport.base.Transport` instance. Nothing
+stops a caller from constructing two independent :class:`SMBusTransport`
+objects with the same ``bus_number``: the OS happily opens
+``/dev/i2c-<n>`` twice, and the two instances would then drive the same
+physical wires with two locks that know nothing about each other — every
+atomicity guarantee in ``docs/architecture/concurrency.md`` silently stops
+holding between them. :class:`SMBusTransport` guards against this *within a
+process* by refusing to open a ``bus_number`` that another live
+:class:`SMBusTransport` already has open (see :data:`SMBusTransport._open_bus_numbers`).
+It cannot guard against two separate *processes* opening the same device
+node — that needs OS-level file locking, which this library does not
+attempt. Build one :class:`~groveyard.board.Board` per physical bus per
+process and share it between every driver that needs it.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Final, Protocol
+import threading
+from typing import TYPE_CHECKING, ClassVar, Final, Protocol
 
 from groveyard.errors import TransportError
 from groveyard.transport.base import BusSession, RetryPolicy, Transport
@@ -179,6 +198,32 @@ class SMBusTransport(Transport):
         ```
     """
 
+    _open_bus_numbers: ClassVar[set[int]] = set()
+    """Bus numbers a live :class:`SMBusTransport` currently has open, process-wide.
+
+    Shared across every instance on purpose: it is what lets a second
+    :class:`SMBusTransport` on the same ``bus_number`` be rejected instead of
+    silently opening a second, uncoordinated file descriptor onto wires a
+    first instance is already serialising traffic on.
+    """
+
+    _registry_lock: ClassVar[threading.Lock] = threading.Lock()
+    """Guards :data:`_open_bus_numbers`.
+
+    A :class:`threading.Lock`, deliberately, not an :class:`asyncio.Lock`. The
+    registry's whole job is to catch a *second* transport that shares no other
+    lock with the first — and that second transport may well be driven by a
+    second event loop in a second thread. An ``asyncio.Lock`` cannot serialise
+    that: its uncontended path is a plain ``if not self._locked: self._locked
+    = True``, which is neither atomic across threads nor loop-aware, and its
+    contended path parks a future on whichever loop got there first, so a
+    release from the other thread never wakes it — the two threads deadlock
+    instead of one of them being rejected.
+
+    Holding a thread lock from async code is safe here because the critical
+    section is a set lookup and a set insert: no awaits, no I/O, microseconds.
+    """
+
     def __init__(self, bus_number: int = DEFAULT_BUS_NUMBER, retry_policy: RetryPolicy | None = None) -> None:
         """Configure the transport without touching the hardware yet.
 
@@ -207,41 +252,92 @@ class SMBusTransport(Transport):
     async def _open(self) -> None:
         """Open ``/dev/i2c-<bus_number>``. Called with the bus lock held.
 
+        Registers ``bus_number`` in :data:`_open_bus_numbers` *before* touching
+        ``smbus2``, and releases it again if anything below fails — including
+        cancellation — so a bus number can never get stuck "reserved" by an
+        open attempt that never actually succeeded.
+
         Idempotent: opening an already-open transport does nothing.
 
         Raises:
-            TransportError: If ``smbus2`` is not installed or the bus cannot be
-                opened (missing device node, no permission, I2C disabled).
+            TransportError: If another live :class:`SMBusTransport` in this
+                process already has ``bus_number`` open, ``smbus2`` is not
+                installed, or the bus cannot be opened (missing device node,
+                no permission, I2C disabled).
         """
         if self._bus is not None:
             return
+        self._reserve_bus_number()
+        opened = False
         try:
-            # Imported here, not at module scope: smbus2 is an optional extra and
-            # must never be imported by the test path.
-            import smbus2  # ty: ignore[unresolved-import]
-        except ImportError as error:  # pragma: no cover - depends on the host
-            msg = "smbus2 is required for real hardware access; install groveyard[hardware]"
-            raise TransportError(msg) from error
-        try:
-            bus = await asyncio.to_thread(smbus2.SMBus, self._bus_number)
-        except OSError as error:  # pragma: no cover - depends on the host
-            msg = f"cannot open I2C bus {self._bus_number}; is I2C enabled and is the user in the i2c group?"
-            raise TransportError(msg) from error
-        self._bus = bus
-        self._messages = smbus2.i2c_msg
+            try:
+                # Imported here, not at module scope: smbus2 is an optional extra and
+                # must never be imported by the test path.
+                import smbus2  # ty: ignore[unresolved-import]
+            except ImportError as error:  # pragma: no cover - depends on the host
+                msg = "smbus2 is required for real hardware access; install groveyard[hardware]"
+                raise TransportError(msg) from error
+            try:
+                bus = await asyncio.to_thread(smbus2.SMBus, self._bus_number)
+            except OSError as error:  # pragma: no cover - depends on the host
+                msg = f"cannot open I2C bus {self._bus_number}; is I2C enabled and is the user in the i2c group?"
+                raise TransportError(msg) from error
+            self._bus = bus
+            self._messages = smbus2.i2c_msg
+            opened = True
+        finally:
+            if not opened:
+                self._release_bus_number()
 
     async def _close(self) -> None:
         """Close the bus handle. Called with the bus lock held.
 
         Holding the lock is what stops the descriptor being pulled out from
-        under a transaction that another task is still running.
+        under a transaction that another task is still running. The bus number
+        is released from :data:`_open_bus_numbers` even if closing the real
+        handle raises, so a failed close cannot permanently strand it as
+        "reserved" for the rest of the process.
 
         Idempotent: closing an already-closed transport does nothing.
         """
         bus, self._bus = self._bus, None
         self._messages = None
         if bus is not None:
-            await asyncio.to_thread(bus.close)
+            try:
+                await asyncio.to_thread(bus.close)
+            finally:
+                self._release_bus_number()
+
+    def _reserve_bus_number(self) -> None:
+        """Claim :attr:`bus_number` for this instance, process-wide.
+
+        Synchronous on purpose: the check and the insert must be one
+        indivisible step, and there is nothing to await between them. Being
+        sync is also what lets the matching release run inside a ``finally``
+        without introducing a cancellation point in a cleanup path.
+
+        Raises:
+            TransportError: If another live :class:`SMBusTransport` in this
+                process — on any thread, in any event loop — already has this
+                bus number open.
+        """
+        with SMBusTransport._registry_lock:
+            if self._bus_number in SMBusTransport._open_bus_numbers:
+                msg = (
+                    f"I2C bus {self._bus_number} is already open by another SMBusTransport "
+                    "in this process. Two independent transports on the same physical bus "
+                    "would each enforce their own, uncoordinated bus lock, silently defeating "
+                    "the atomicity this library depends on — construct one Board per physical "
+                    "bus and share it between every driver that needs it, instead of building "
+                    "a second one."
+                )
+                raise TransportError(msg)
+            SMBusTransport._open_bus_numbers.add(self._bus_number)
+
+    def _release_bus_number(self) -> None:
+        """Give :attr:`bus_number` back so another :class:`SMBusTransport` may open it."""
+        with SMBusTransport._registry_lock:
+            SMBusTransport._open_bus_numbers.discard(self._bus_number)
 
     def _create_session(self) -> BusSession:
         """Build a session bound to the open bus handle.

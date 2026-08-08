@@ -9,6 +9,39 @@ changes to the public API.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-08
+
+### Fixed
+
+- **Two transports could drive one physical bus with no coordination between
+  them.** Every atomicity guarantee in the library is scoped to a single
+  `Transport` instance — its bus lock lives on `self`. Nothing stopped a
+  caller from building two `SMBusTransport` objects on the same `bus_number`:
+  the OS opens `/dev/i2c-<n>` twice quite happily, and the two instances then
+  serialised traffic against two locks that knew nothing about each other,
+  silently defeating the guarantees documented in the concurrency model.
+  `SMBusTransport` now keeps a process-wide registry of open bus numbers and
+  rejects the second transport with a `TransportError` explaining what to do
+  instead. The reservation is released again if opening fails, is cancelled,
+  or if closing the handle raises, so a bus number can never get stuck
+  reserved.
+
+  This is a behaviour change for code that was (incorrectly) opening the same
+  bus twice: it now fails loudly at `connect()` instead of corrupting traffic
+  at random. The guard is per-process; it cannot detect two separate
+  *processes* sharing one device node, which would need OS-level file
+  locking.
+
+### Added
+
+- Python 3.14 is now tested in CI and declared in the package metadata.
+- `examples/` — one small runnable script per module, for confirming the
+  library against real hardware, plus a `Makefile` wrapping the development
+  gates (`make check`, `make docs`, …).
+- A prominent notice in the README that the library has not yet been verified
+  on a physical GrovePi+ board, and that feedback from anyone who can test it
+  is welcome.
+
 ## [0.1.0] - 2026-08-08
 
 Initial release: the full async driver stack for a GrovePi+ starter kit.
@@ -70,5 +103,6 @@ Initial release: the full async driver stack for a GrovePi+ starter kit.
 See the [architecture documentation](https://quantumwaffy.github.io/groveyard/architecture/)
 for the reasoning behind all of the above.
 
-[Unreleased]: https://github.com/quantumwaffy/groveyard/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/quantumwaffy/groveyard/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/quantumwaffy/groveyard/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/quantumwaffy/groveyard/releases/tag/v0.1.0
