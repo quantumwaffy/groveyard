@@ -25,7 +25,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # git-revision-date-localized-plugin needs full history
       - uses: astral-sh/setup-uv@v7
