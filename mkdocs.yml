@@ -1,0 +1,146 @@
+site_name: groveyard
+site_description: A modern, fully typed async Python library for GrovePi+ sensors and actuators on a Raspberry Pi.
+site_url: https://quantumwaffy.github.io/groveyard/
+repo_url: https://github.com/quantumwaffy/groveyard
+repo_name: quantumwaffy/groveyard
+edit_uri: edit/master/docs/
+copyright: Copyright &copy; 2026 Sasha
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/leaf
+  favicon: assets/favicon.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+  - Architecture:
+      - Layers overview: architecture/index.md
+      - Concurrency model: architecture/concurrency.md
+      - Wire protocol: protocol.md
+  - Guides:
+      - Testing without hardware: guides/testing.md
+      - Writing a new driver: guides/new-driver.md
+  - API reference:
+      - Overview: api/index.md
+      - Board: api/board.md
+      - Ports: api/ports.md
+      - Errors: api/errors.md
+      - Transport: api/transport.md
+      - Protocol: api/protocol.md
+      - Devices:
+          - Base classes: api/devices/base.md
+          - Button: api/devices/button.md
+          - Led: api/devices/led.md
+          - Buzzer: api/devices/buzzer.md
+          - Relay: api/devices/relay.md
+          - LightSensor: api/devices/light_sensor.md
+          - SoundSensor: api/devices/sound_sensor.md
+          - Potentiometer: api/devices/potentiometer.md
+          - Dht: api/devices/dht.md
+          - Ultrasonic: api/devices/ultrasonic.md
+          - RgbLcd: api/devices/rgb_lcd.md
+      - Testing utilities: api/testing.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+  - Community:
+      - Code of conduct: code-of-conduct.md
+      - Security policy: security.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      permalink: "#"
+      title: On this page
+
+plugins:
+  - search
+  - include-markdown
+  - git-revision-date-localized:
+      enable_creation_date: false
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          inventories:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            docstring_section_style: table
+            members_order: source
+            filters: ["!^_", "^__init__$"]
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/quantumwaffy/groveyard
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/groveyard/
+
+watch:
+  - src/groveyard

@@ -1,7 +1,25 @@
+<div align="center">
+
 # groveyard
 
-A modern, fully typed **async** Python library for the sensors and actuators of a
-GrovePi+ starter kit on a Raspberry Pi.
+**A modern, fully typed async Python library for GrovePi+ sensors and actuators on a Raspberry Pi.**
+
+[![PyPI](https://img.shields.io/pypi/v/groveyard?color=2e7d32)](https://pypi.org/project/groveyard/)
+[![Python versions](https://img.shields.io/pypi/pyversions/groveyard)](https://pypi.org/project/groveyard/)
+[![CI](https://github.com/quantumwaffy/groveyard/actions/workflows/ci.yml/badge.svg)](https://github.com/quantumwaffy/groveyard/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-quantumwaffy.github.io%2Fgroveyard-2e7d32)](https://quantumwaffy.github.io/groveyard/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Typed](https://img.shields.io/badge/typing-ty--clean-2e7d32)](https://quantumwaffy.github.io/groveyard/architecture/)
+
+[**Documentation**](https://quantumwaffy.github.io/groveyard/) ·
+[Quickstart](https://quantumwaffy.github.io/groveyard/getting-started/quickstart/) ·
+[Architecture](https://quantumwaffy.github.io/groveyard/architecture/) ·
+[API reference](https://quantumwaffy.github.io/groveyard/api/) ·
+[Contributing](CONTRIBUTING.md)
+
+</div>
+
+---
 
 Many concurrent tasks can share one I2C bus and one stateful device without
 stepping on each other: the bus is serialised by a single lock, and each device
@@ -34,7 +52,9 @@ pip install groveyard[hardware]  # on the Pi: adds smbus2
 ```
 
 Python 3.12+. `smbus2` is the only runtime dependency, and only on the Pi — it
-lives behind the transport abstraction, so nothing imports it off-device.
+lives behind the transport abstraction, so nothing imports it off-device. See
+[Installation](https://quantumwaffy.github.io/groveyard/getting-started/installation/)
+for the full picture.
 
 ## Supported modules
 
@@ -52,24 +72,17 @@ lives behind the transport abstraction, so nothing imports it off-device.
 | `RgbLcd` | native I2C | 16×2 text plus RGB backlight |
 
 Every analog driver keeps the raw `0..1023` reading reachable; unit conversions
-are convenience on top, never a replacement.
+are convenience on top, never a replacement. Full details:
+[API reference](https://quantumwaffy.github.io/groveyard/api/).
 
-## Concurrency
+## Concurrency, in one paragraph
 
-Two hazards, two locks:
-
-* **The bus is shared.** A bridged operation is `write → sleep → read`; if two
-  tasks interleave, one reads the other's reply. The transport wraps the whole
-  transaction in one `asyncio.Lock`, so every exchange — bridged or native-I2C —
-  is atomic with respect to every other.
-* **Devices are stateful.** One logical operation can span several transactions
-  (configure-then-read, a read-modify-write on the LCD or a dimmable LED). Each
-  driver owns an `asyncio.Lock` that makes that operation atomic. Two tasks on
-  *different* devices proceed concurrently, contending only briefly on the bus.
-
-Locks are always taken in the order **device → bus**, they are always taken with
-`async with` (so cancellation cannot leak one), and actuators fail safe to *off*
-when they are closed or the board disconnects.
+Two hazards, two locks: a single bus lock serialises every I2C transaction
+(bridged or native-I2C), and each device owns a second lock that makes a
+multi-step operation on *that* device atomic. Two tasks on different devices
+run concurrently; two tasks on the same device serialise automatically. Locks
+are always taken **device → bus**, always with `async with`, and actuators
+fail safe to *off* on close, disconnect, or a crash — even under cancellation.
 
 ```python
 async with Board.on_i2c() as board:
@@ -80,8 +93,8 @@ async with Board.on_i2c() as board:
         tasks.create_task(ranger.read_distance_cm())
 ```
 
-Two drivers may not claim the same socket — the second one raises
-`PortInUseError` instead of silently corrupting the first one's cached state.
+Full write-up, with sequence diagrams:
+[Concurrency model](https://quantumwaffy.github.io/groveyard/architecture/concurrency/).
 
 ## Testing without a Raspberry Pi
 
@@ -100,7 +113,8 @@ async with Board(FakeTransport(responder=firmware)) as board:
 
 The fake records every bus event with the id of the transaction it belongs to,
 and records requested delays instead of sleeping — so timing and atomicity are
-asserted, not waited for.
+asserted, not waited for. See
+[Testing without hardware](https://quantumwaffy.github.io/groveyard/guides/testing/).
 
 ## Errors
 
@@ -108,20 +122,33 @@ Everything derives from `GroveyardError`: `TransportError` (the bus failed),
 `ProtocolError` (malformed reply), `DeviceNotReadyError` (the board answered
 "not ready" on every attempt), `BoardError` (`NotConnectedError`,
 `PortInUseError`) and `DeviceError` (`DeviceClosedError`). Out-of-range
-arguments are caller bugs and raise plain `ValueError`.
+arguments are caller bugs and raise plain `ValueError`. See
+[Errors](https://quantumwaffy.github.io/groveyard/api/errors/).
 
-## Development
+## Architecture, in one picture
 
-```bash
-uv sync
-uv run ruff check . && uv run ruff format .
-uv run ty check
-uv run pytest
+```mermaid
+flowchart LR
+    Devices["Devices<br/><small>Button, Led, Dht, RgbLcd, …</small>"]
+    Board["Board<br/><small>lifecycle, ports, pin-mode cache</small>"]
+    Protocol["Protocol<br/><small>0x04 command encoding</small>"]
+    Transport["Transport<br/><small>bus handle + the one bus lock</small>"]
+
+    Devices --> Board --> Protocol --> Transport
 ```
 
-The wire protocol is documented in [`docs/protocol.md`](docs/protocol.md);
-architecture and conventions live in [`CLAUDE.md`](CLAUDE.md).
+Each layer depends only on the one below it and on an abstraction, never a
+concrete class — adding a driver means adding a class, never editing a core
+layer. Full tour, with class diagrams and a traced example call:
+[Layers overview](https://quantumwaffy.github.io/groveyard/architecture/).
+
+## Contributing
+
+Issues and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the
+development setup, the four required gates, and a worked walkthrough of
+adding a new driver. [CHANGELOG.md](CHANGELOG.md) tracks releases;
+[SECURITY.md](SECURITY.md) covers vulnerability reporting.
 
 ## Licence
 
-MIT.
+MIT — see [LICENSE](LICENSE).

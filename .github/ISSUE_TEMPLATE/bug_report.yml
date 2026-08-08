@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in groveyard doesn't behave the way the docs say it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. If this is a security or
+        physical-safety concern (an actuator behaving in an unintended way),
+        please use [private reporting](https://github.com/quantumwaffy/groveyard/security/advisories/new)
+        instead of a public issue — see [SECURITY.md](https://github.com/quantumwaffy/groveyard/blob/master/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: groveyard version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Real Raspberry Pi hardware
+        - FakeTransport / development only
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Expected vs. actual behaviour. Include the driver or layer involved.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: >
+        A short script reproducing the issue. If it's concurrency-related, a
+        two-task scenario against `FakeTransport`/`FakeBridgeFirmware` is
+        usually enough — see the Testing guide.
+      render: python
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?

@@ -1,0 +1,35 @@
+name: Feature request
+description: A new driver, a new capability, or a change to the public API.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of request is this?
+      options:
+        - New device driver
+        - Change to an existing driver
+        - Core layer (transport / protocol / board)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: >
+        What would you like to see? For a new driver, link the module's row
+        in `docs/protocol.md` if you have it, or describe the hardware.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to work on this myself (see CONTRIBUTING.md)

@@ -13,11 +13,17 @@ safely share one I2C bus and stateful devices **without race conditions**.
 
 ## Status
 
-Infrastructure/prep phase. The **library code is not written yet** — do not
-scaffold drivers or a package tree unless explicitly asked. What exists today:
-this guide, `docs/protocol.md` (hardware wire protocol), and the `.claude/`
-agents + commands. Design decisions below are settled; follow them when codegen
-starts.
+All five layers are implemented and reviewed: `transport/`, `protocol/`,
+`board.py`, ten drivers under `devices/`, and the curated `__init__.py`
+surface — see [the architecture docs](docs/architecture/index.md) for a full
+tour. The design decisions below describe what was actually built, not a plan
+for later. New work is additive: a new module means a new `Device` subclass
+(see [Writing a new driver](docs/guides/new-driver.md)), not an edit to a core
+layer.
+
+What exists today: this guide, `docs/` (the full documentation site, built
+with MkDocs — run `uv run mkdocs serve` to browse it locally), the
+`.claude/` agents + commands, `src/groveyard/` (the library), and `tests/`.
 
 ---
 
@@ -101,15 +107,20 @@ Rules:
 - **Hardware I/O:** `smbus2` (only real dependency for on-device use; kept behind
   the transport so tests never import it).
 
-Common commands (assume these once `pyproject.toml` exists):
+Common commands:
 
 ```bash
-uv sync                     # install deps
+uv sync --all-groups        # install deps (dev + docs groups)
 uv run ruff check .         # lint
 uv run ruff format .        # format
 uv run ty check             # type check
-uv run pytest               # tests (fake transport, no Pi needed)
+uv run pytest               # tests + coverage report (fake transport, no Pi needed)
+uv run mkdocs serve         # preview the documentation site locally
 ```
+
+CI (`.github/workflows/ci.yml`) runs all four gates plus a package build and a
+strict docs build on every push and PR; `release.yml` publishes to PyPI via
+trusted publishing on a `v*` tag — see `RELEASING.md`.
 
 If a command's exact form isn't set up yet, propose it rather than guessing a tool
 we didn't choose (e.g. don't invoke mypy or poetry).
