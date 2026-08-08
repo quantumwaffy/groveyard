@@ -21,6 +21,13 @@
 
 ---
 
+> [!WARNING]
+> **Not yet tested on real hardware.** Everything here is verified against the
+> in-memory [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/),
+> not a physical GrovePi+ board. If you can try it on real hardware, feedback
+> and contributions are very welcome —
+> [open an issue](https://github.com/quantumwaffy/groveyard/issues) or a PR.
+
 Many concurrent tasks can share one I2C bus and one stateful device without
 stepping on each other: the bus is serialised by a single lock, and each device
 owns a second lock that makes a multi-step operation atomic. Nothing blocks the
