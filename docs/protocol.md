@@ -51,11 +51,23 @@ Notes that bit people:
 - **Write is always 4 bytes.** Commands that need fewer args pad with `0`.
 - **The read is a separate I2C transaction**, not a repeated-start read. The
   firmware buffers the reply and hands it back on the next read.
-- **First read byte is an echo** of the command id for most data commands. The
-  historical helper reads `n+1` bytes and discards byte 0. Model this explicitly
-  (read `n+1`, validate/skip the echo) rather than hard-coding offsets.
+- **First read byte is an echo** of the command id for **every** data command,
+  digital read included: the firmware writes the command id ahead of the payload. Read
+  `n+1` bytes and validate the echo rather than hard-coding offsets; a mismatch
+  means the transaction was torn by another task and must not be decoded.
+- **Write-only commands are never read back.** `pin_mode` (`5`), `digital_write`
+  (`2`) and `analog_write` (`4`) queue **no** reply: the firmware's request
+  handler has no branch for those command ids. A
+  read issued after one of them returns the idle byte `0xFF`, which is
+  indistinguishable from a not-ready sentinel and would trigger pointless
+  retries. Write, wait `t_cmd`, and move on.
 - **Not-ready sentinels:** a reply whose first byte is `23` (`data_not_available`)
-  or `255` means "not ready yet" → wait and retry, do not treat as a value.
+  or `255` means "not ready yet" → wait and retry, do not treat as a value. The
+  firmware answers `23` while it still owes its main loop one pass before the
+  result is ready, so this is expected traffic, not a fault.
+- **Retry the whole transaction, not just the read.** The firmware clears the
+  pending command once it has answered, so a not-ready reply must be followed by
+  a fresh `write → sleep → read`, not by another bare read.
 - **Retries:** transient `OSError`/`IOError` on the bus is expected. Retry a small
   bounded number of times with a short backoff before surfacing an error.
 - **Timing `t_cmd`:** ~2 ms is enough for simple digital/analog ops. Ultrasonic
@@ -72,11 +84,11 @@ analog `0..2`). "Returns" is the payload **after** the echo byte is stripped.
 | Operation | cmd | Write args `[cmd, …]` | Read | Returns / meaning | Notes |
 |-----------|----:|-----------------------|-----:|-------------------|-------|
 | Firmware version | `8` | `[8, 0, 0, 0]` | 3 | `major.minor.patch` | Handshake / capability check on connect. |
-| Set pin mode | `5` | `[5, pin, mode, 0]` | 1 (ack) | — | Configure once; cache the mode. |
-| Digital read | `1` | `[1, pin, 0, 0]` | 1 | `0` / `1` | Button, and any digital input. |
-| Digital write | `2` | `[2, pin, value, 0]` | 1 (ack) | — | `value` `0`/`1`. LED/buzzer/relay on–off. |
+| Set pin mode | `5` | `[5, pin, mode, 0]` | — | — | **No reply.** Configure once; cache the mode. |
+| Digital read | `1` | `[1, pin, 0, 0]` | 1 | `0` / `1` | Button, and any digital input. Echoed like every other data command. |
+| Digital write | `2` | `[2, pin, value, 0]` | — | — | **No reply.** `value` `0`/`1`. LED/buzzer/relay on–off. |
 | Analog read | `3` | `[3, pin, 0, 0]` | 2 | `hi*256 + lo`, range `0..1023` | 10-bit ADC. Light/sound/rotary. |
-| Analog write (PWM) | `4` | `[4, pin, value, 0]` | 1 (ack) | — | `value` `0..255` duty cycle. LED brightness. |
+| Analog write (PWM) | `4` | `[4, pin, value, 0]` | — | — | **No reply.** `value` `0..255` duty cycle. LED brightness. |
 | Ultrasonic read | `7` | `[7, pin, 0, 0]` | 2 | distance in **cm**, `hi*256+lo` | **Needs ~50 ms** before the read. Range 3–400 cm. |
 | DHT read | `40` | `[40, pin, type, 0]` | 8 | two `float32` LE: `[temp_C, humidity_%]` | `type`: `0` = DHT11 (blue), `1` = DHT22 (white). **Slow (~250 ms class).** Validate range; reject `NaN`. |
 

@@ -63,3 +63,6 @@ python_files = [
 
 [tool.ty.environment]
 python-version = "3.12"
+
+[tool.ty.src]
+include = ["src", "tests"]
