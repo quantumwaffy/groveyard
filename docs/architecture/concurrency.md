@@ -202,3 +202,29 @@ Without that, a whole fake transaction would run to completion in one
 scheduler step and `has_interleaved_sessions()` could never observe a real
 interleaving — see [Testing without hardware](../guides/testing.md) for how
 to use this when testing a new driver's concurrency contract.
+
+## What is *not* protected: two transports on one physical bus
+
+Every guarantee above is scoped to **one [`Transport`][groveyard.Transport]
+instance** — the bus lock lives on `self`, not anywhere shared. Nothing stops
+a caller from constructing two independent
+[`SMBusTransport`][groveyard.SMBusTransport] objects with the same
+`bus_number`: the OS happily opens `/dev/i2c-<n>` twice, and the two
+instances then drive the same physical wires with two locks that know
+nothing about each other. Every atomicity guarantee on this page silently
+stops holding *between* them — a write queued through one can interleave with
+a write queued through the other, with nothing to catch it.
+
+[`SMBusTransport`][groveyard.SMBusTransport] guards against this *within a
+process*: a class-level registry (`_open_bus_numbers`, protected by its own
+lock, independent of any one instance's bus lock) rejects opening a
+`bus_number` that another live `SMBusTransport` in the same process already
+has open, with a [`TransportError`][groveyard.TransportError] naming the
+conflict. It **cannot** guard against two separate *processes* opening the
+same device node — that would need OS-level file locking (`flock` on
+`/dev/i2c-<n>`, or a lock-file convention), which this library does not
+attempt.
+
+The practical rule: construct **one [`Board`][groveyard.Board] per physical
+bus per process**, and share it between every driver that needs it. Don't
+build a second one "just for this one sensor."

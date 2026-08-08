@@ -64,6 +64,16 @@ class Board:
     for modification — adding a new module means adding a
     :class:`~groveyard.devices.base.Device` subclass, never editing this class.
 
+    Warning:
+        Construct **one** board per physical bus and share it between every
+        driver that needs it. Two boards wrapping two
+        :class:`~groveyard.transport.i2c.SMBusTransport` instances on the
+        same ``bus_number`` would each enforce their own, uncoordinated bus
+        lock — silently defeating every atomicity guarantee this class
+        exists to provide. :class:`~groveyard.transport.i2c.SMBusTransport`
+        rejects that combination within one process; it cannot detect it
+        across two separate processes.
+
     Example:
         ```python
         async with Board.on_i2c() as board:
