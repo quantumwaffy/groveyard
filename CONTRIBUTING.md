@@ -33,6 +33,11 @@ uv run ty check          # type check (Astral's `ty`, not mypy/pyright)
 uv run pytest             # tests, with a coverage report
 ```
 
+or, via the [`Makefile`](Makefile): `make lint`, `make format`, `make typecheck`,
+`make test` — and `make check` to run all four in the order CI runs them
+(`make help` lists every target, including `make docs` to preview the
+documentation site locally).
+
 `ruff` enforces mandatory type annotations (`ANN`), mandatory Google-style
 docstrings on every public *and* private member (`D`), absolute-imports-only
 (`TID`), and a blocking-call check for `async def` code (`ASYNC`) — the

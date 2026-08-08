@@ -71,7 +71,7 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "tests", "examples"]
 
 [tool.ruff.lint]
 # ASYNC (flake8-async): flags blocking calls made from `async` code (time.sleep,
@@ -92,6 +92,8 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 # Tests keep full type annotations but relax docstrings — test names document intent.
 "tests/*" = ["D"]
+# Examples are simple runnable scripts; the module docstring documents intent.
+"examples/*" = ["D103"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -122,4 +124,4 @@ exclude_also = [
 python-version = "3.12"
 
 [tool.ty.src]
-include = ["src", "tests"]
+include = ["src", "tests", "examples"]

@@ -5,7 +5,7 @@
 **A modern, fully typed async Python library for GrovePi+ sensors and actuators on a Raspberry Pi.**
 
 [![PyPI](https://img.shields.io/pypi/v/groveyard?color=2e7d32)](https://pypi.org/project/groveyard/)
-[![Python versions](https://img.shields.io/pypi/pyversions/groveyard)](https://pypi.org/project/groveyard/)
+[![Python versions](https://img.shields.io/pypi/pyversions/groveyard?cacheSeconds=3600)](https://pypi.org/project/groveyard/)
 [![CI](https://github.com/quantumwaffy/groveyard/actions/workflows/ci.yml/badge.svg)](https://github.com/quantumwaffy/groveyard/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-quantumwaffy.github.io%2Fgroveyard-2e7d32)](https://quantumwaffy.github.io/groveyard/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -102,6 +102,13 @@ async with Board.on_i2c() as board:
 
 Full write-up, with sequence diagrams:
 [Concurrency model](https://quantumwaffy.github.io/groveyard/architecture/concurrency/).
+
+## Examples
+
+[`examples/`](examples/README.md) has one small, runnable script per module — real
+hardware, not the fake transport. If you have a GrovePi+ on hand, this is
+also how you can help confirm the library actually works on real silicon;
+see the warning at the top of this file.
 
 ## Testing without a Raspberry Pi
 
