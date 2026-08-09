@@ -26,6 +26,8 @@ Off-device, swap the transport for the in-memory fake and the same code runs on 
 laptop; see :mod:`groveyard.testing`.
 """
 
+from importlib.metadata import version as _version
+
 from groveyard.board import Board
 from groveyard.devices import (
     AnalogInputDevice,
@@ -67,7 +69,12 @@ from groveyard.transport.base import RetryPolicy, Transport
 from groveyard.transport.fake import FakeTransport
 from groveyard.transport.i2c import SMBusTransport
 
-__version__ = "0.1.0"
+__version__ = _version("groveyard")
+"""The installed package version, read from package metadata.
+
+Derived rather than hand-copied so it can never drift from ``pyproject.toml``
+— which is exactly what happened before this was fixed.
+"""
 
 __all__ = [
     "AnalogInputDevice",

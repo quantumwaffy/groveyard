@@ -6,8 +6,8 @@ not need this file — see [CONTRIBUTING.md](CONTRIBUTING.md) instead.
 ## Versioning
 
 groveyard follows [Semantic Versioning](https://semver.org/). While the major
-version is `0`, treat a minor bump (`0.1.0` → `0.2.0`) as the breaking-change
-boundary and a patch bump (`0.1.0` → `0.1.1`) as backwards compatible.
+version is `0`, treat a minor bump (`0.1.2` → `0.2.0`) as the breaking-change
+boundary and a patch bump (`0.1.2` → `0.1.3`) as backwards compatible.
 
 ## One-time setup (already done, kept here for reference)
 
@@ -30,19 +30,28 @@ boundary and a patch bump (`0.1.0` → `0.1.1`) as backwards compatible.
    ```bash
    git commit -am "Release vX.Y.Z"
    ```
-5. **Tag and push:**
+5. **Verify the tag doesn't already exist — locally *and* on `origin`** before
+   creating it. Pushing a tag that already points somewhere (e.g. created
+   once through the GitHub web UI and forgotten) silently publishes whatever
+   that old commit contains, not what you think you're releasing:
+   ```bash
+   git fetch --tags
+   git tag -l vX.Y.Z          # must print nothing
+   git ls-remote --tags origin vX.Y.Z   # must print nothing
+   ```
+6. **Tag and push:**
    ```bash
    git tag -a vX.Y.Z -m "vX.Y.Z"
    git push origin master vX.Y.Z
    ```
-6. Pushing the `v*` tag triggers `.github/workflows/release.yml`, which
+7. Pushing the `v*` tag triggers `.github/workflows/release.yml`, which
    builds the sdist and wheel, runs `twine check`, and publishes to PyPI via
    trusted publishing. Watch the
    [Actions tab](https://github.com/quantumwaffy/groveyard/actions) for the
    run.
-7. **Draft the GitHub release** from the pushed tag, pasting the relevant
+8. **Draft the GitHub release** from the pushed tag, pasting the relevant
    `CHANGELOG.md` section as the release notes.
-8. **Verify:** `pip install groveyard==X.Y.Z` in a clean environment, and
+9. **Verify:** `pip install groveyard==X.Y.Z` in a clean environment, and
    check that <https://quantumwaffy.github.io/groveyard/changelog/> reflects
    the new version (the docs site redeploys automatically on every push to
    `master`, including the release commit).

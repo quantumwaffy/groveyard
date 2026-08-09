@@ -1,6 +1,6 @@
 [project]
 name = "groveyard"
-version = "0.1.1"
+version = "0.1.2"
 description = "A modern, fully typed async Python library for GrovePi+ sensors and actuators on a Raspberry Pi"
 readme = "README.md"
 requires-python = ">=3.12"

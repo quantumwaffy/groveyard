@@ -84,7 +84,7 @@ asyncio.run(main())
 | [`Relay`][groveyard.Relay] | digital out | `close_circuit()` / `open_circuit()`, fail-safe |
 | [`Dht`][groveyard.Dht] | digital special | `DhtReading(temperature_celsius, humidity_percent)` |
 | [`Ultrasonic`][groveyard.Ultrasonic] | digital special | distance in cm, `None` when nothing is in range |
-| [`RgbLcd`][groveyard.RgbLcd] | native I2C | 16×2 text plus RGB backlight |
+| [`RgbLcd`][groveyard.RgbLcd] | I2C port | 16×2 text plus RGB backlight |
 
 Every analog driver keeps the raw `0..1023` reading reachable; unit
 conversions are convenience on top, never a replacement.

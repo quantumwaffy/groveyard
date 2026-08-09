@@ -21,11 +21,14 @@
 
 ---
 
-> [!WARNING]
-> **Not yet tested on real hardware.** Everything here is verified against the
-> in-memory [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/),
-> not a physical GrovePi+ board. If you can try it on real hardware, feedback
-> and contributions are very welcome —
+> [!NOTE]
+> **Confirmed on real hardware.** The core connection — the firmware
+> handshake, and the RGB LCD — has been verified against a physical
+> GrovePi+ board, on top of the 175-test suite that runs against the
+> in-memory
+> [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/).
+> Individual sensor drivers are still lightly exercised in the wild — if you
+> try one, feedback and contributions are welcome:
 > [open an issue](https://github.com/quantumwaffy/groveyard/issues) or a PR.
 
 Many concurrent tasks can share one I2C bus and one stateful device without
@@ -76,7 +79,7 @@ for the full picture.
 | `Relay` | digital out | `close_circuit()` / `open_circuit()`, fail-safe |
 | `Dht` | digital special | `DhtReading(temperature_celsius, humidity_percent)` |
 | `Ultrasonic` | digital special | distance in cm, `None` when nothing is in range |
-| `RgbLcd` | native I2C | 16×2 text plus RGB backlight |
+| `RgbLcd` | I2C port | 16×2 text plus RGB backlight |
 
 Every analog driver keeps the raw `0..1023` reading reachable; unit conversions
 are convenience on top, never a replacement. Full details:
@@ -84,12 +87,12 @@ are convenience on top, never a replacement. Full details:
 
 ## Concurrency, in one paragraph
 
-Two hazards, two locks: a single bus lock serialises every I2C transaction
-(bridged or native-I2C), and each device owns a second lock that makes a
-multi-step operation on *that* device atomic. Two tasks on different devices
-run concurrently; two tasks on the same device serialise automatically. Locks
-are always taken **device → bus**, always with `async with`, and actuators
-fail safe to *off* on close, disconnect, or a crash — even under cancellation.
+Two hazards, two locks: a single bus lock serialises every I2C transaction,
+and each device owns a second lock that makes a multi-step operation on
+*that* device atomic. Two tasks on different devices run concurrently; two
+tasks on the same device serialise automatically. Locks are always taken
+**device → bus**, always with `async with`, and actuators fail safe to
+*off* on close, disconnect, or a crash — even under cancellation.
 
 ```python
 async with Board.on_i2c() as board:
