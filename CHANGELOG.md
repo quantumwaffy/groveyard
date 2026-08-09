@@ -9,9 +9,27 @@ changes to the public API.
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-08-08
+## [0.1.1] - 2026-08-09
 
 ### Fixed
+
+- **Every real-hardware read was silently corrupted.** `SMBusSession.read()`
+  built the reply with `bytes(bytearray(message))`, where `message` is a
+  `smbus2.i2c_msg` — a `ctypes.Structure`. `bytearray()` on a
+  `ctypes.Structure` uses the buffer protocol, which returns the
+  *structure's own raw memory* (its `addr`/`flags`/`len` fields plus the
+  `buf` pointer itself — `ctypes.sizeof(i2c_msg)` bytes, 16 on a 64-bit
+  host) instead of the data the pointer refers to, silently bypassing the
+  class's own `__iter__`. In practice this meant every single bridged read
+  failed with `short read ... expected N, got 16` — none of the 16 bytes
+  were ever real device data. Found by a user's first real-hardware test.
+  Fixed by using `bytes(message)`, which calls `i2c_msg.__bytes__` and
+  correctly dereferences the buffer. Regression-tested with a `ctypes`
+  fake shaped exactly like `smbus2.i2c_msg` (a `MagicMock` cannot reproduce
+  this class of bug, since it doesn't support the buffer protocol the way a
+  real `ctypes.Structure` does). Confirmed fixed against a physical
+  GrovePi+ board: the firmware-version handshake and the native-I2C RGB
+  LCD both now complete correctly end to end.
 
 - **Two transports could drive one physical bus with no coordination between
   them.** Every atomicity guarantee in the library is scoped to a single
@@ -38,9 +56,9 @@ changes to the public API.
 - `examples/` — one small runnable script per module, for confirming the
   library against real hardware, plus a `Makefile` wrapping the development
   gates (`make check`, `make docs`, …).
-- A prominent notice in the README that the library has not yet been verified
-  on a physical GrovePi+ board, and that feedback from anyone who can test it
-  is welcome.
+- A notice in the README confirming the core I2C path against a physical
+  GrovePi+ board, and inviting feedback from anyone testing individual
+  sensor drivers on their own hardware.
 
 ## [0.1.0] - 2026-08-08
 

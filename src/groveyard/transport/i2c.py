@@ -123,7 +123,14 @@ class SMBusSession(BusSession):
         """
         message = self._messages.read(address, count)
         await self._run(f"read {count} byte(s) from {address:#04x}", self._bus.i2c_rdwr, message)
-        data = bytes(bytearray(message))
+        # `bytes(message)` — not `bytes(bytearray(message))`. smbus2.i2c_msg is a
+        # ctypes.Structure; bytearray() on a ctypes.Structure reads its raw
+        # in-memory layout via the buffer protocol (addr/flags/len fields plus
+        # the buf pointer itself — sizeof(i2c_msg), 16 bytes on a 64-bit host),
+        # completely bypassing the class's own __iter__. bytes() instead calls
+        # its __bytes__, which dereferences the pointer correctly
+        # (string_at(self.buf, self.len)) and returns the real reply.
+        data = bytes(message)
         if len(data) != count:
             msg = f"short read from {address:#04x}: expected {count} byte(s), got {len(data)}"
             raise TransportError(msg)

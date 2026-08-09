@@ -21,11 +21,14 @@
 
 ---
 
-> [!WARNING]
-> **Not yet tested on real hardware.** Everything here is verified against the
-> in-memory [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/),
-> not a physical GrovePi+ board. If you can try it on real hardware, feedback
-> and contributions are very welcome —
+> [!NOTE]
+> **Confirmed on real hardware.** The core I2C path — the bridge firmware
+> handshake every bridged driver depends on, and the native-I2C RGB LCD — has
+> been verified against a physical GrovePi+ board, on top of the 175-test
+> suite that runs against the in-memory
+> [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/).
+> Individual sensor drivers are still lightly exercised in the wild — if you
+> try one, feedback and contributions are welcome:
 > [open an issue](https://github.com/quantumwaffy/groveyard/issues) or a PR.
 
 Many concurrent tasks can share one I2C bus and one stateful device without
