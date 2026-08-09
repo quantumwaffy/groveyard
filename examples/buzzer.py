@@ -1,6 +1,6 @@
 """Sound a Grove buzzer: on/off, then a few short beeps.
 
-Wiring: plug the buzzer into digital port D5 (or change PORT below).
+Wiring: plug the buzzer into digital port D4 (or change PORT below).
 
 Run:
     python examples/buzzer.py
@@ -10,7 +10,7 @@ import asyncio
 
 from groveyard import Board, Buzzer, DigitalPort
 
-PORT = DigitalPort.D5
+PORT = DigitalPort.D4
 
 
 async def main() -> None:
