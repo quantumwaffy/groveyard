@@ -28,18 +28,18 @@ and your user is in the `i2c` group — see
 Each script has a `PORT` constant near the top — edit it if you wired the
 module to a different socket than the default below.
 
-| Script | Module | Default port |
-|---|---|---|
-| `board.py` | — (just the HAT itself) | — |
-| `button.py` | Button | `D3` |
-| `led.py` | LED | `D4` |
-| `buzzer.py` | Buzzer | `D5` |
-| `relay.py` | Relay | `D6` |
-| `light_sensor.py` | Light sensor | `A0` |
-| `sound_sensor.py` | Sound sensor | `A1` |
-| `potentiometer.py` | Rotary angle sensor | `A2` |
-| `dht.py` | DHT temp/humidity sensor | `D7` |
-| `ultrasonic.py` | Ultrasonic ranger | `D8` |
+| Script | Module | Default port                         |
+|---|---|--------------------------------------|
+| `board.py` | — (just the HAT itself) | —                                    |
+| `button.py` | Button | `D3`                                 |
+| `buzzer.py` | Buzzer | `D4`                                 |
+| `led.py` | LED | `D5`                                 |
+| `relay.py` | Relay | `D6`                                 |
+| `light_sensor.py` | Light sensor | `A0`                                 |
+| `sound_sensor.py` | Sound sensor | `A1`                                 |
+| `potentiometer.py` | Rotary angle sensor | `A2`                                 |
+| `dht.py` | DHT temp/humidity sensor | `D7`                                 |
+| `ultrasonic.py` | Ultrasonic ranger | `D8`                                 |
 | `rgb_lcd.py` | RGB LCD | I2C port (no `PORT` constant needed) |
 
 You can plug in and run just the ones you have — they are independent of

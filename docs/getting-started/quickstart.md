@@ -39,7 +39,7 @@ from groveyard import AnalogPort, Board, DigitalPort, Led, LightSensor
 async def main() -> None:
     async with Board.on_i2c() as board:
         sensor = LightSensor(board, AnalogPort.A0)
-        led = Led(board, DigitalPort.D4)
+        led = Led(board, DigitalPort.D5)
 
         raw = await sensor.read_raw()  # 0..1023, always available
         ratio = await sensor.read_ratio()  # 0.0..1.0
