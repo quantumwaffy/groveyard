@@ -45,7 +45,7 @@ from groveyard import AnalogPort, Board, DigitalPort, Led, LightSensor
 async def main() -> None:
     async with Board.on_i2c() as board:
         sensor = LightSensor(board, AnalogPort.A0)
-        led = Led(board, DigitalPort.D4)
+        led = Led(board, DigitalPort.D5)
 
         if await sensor.read_raw() < 300:
             await led.set_brightness(0.6)

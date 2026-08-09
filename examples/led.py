@@ -1,9 +1,9 @@
 """Drive a Grove LED: on/off, then a brightness fade.
 
-Wiring: plug the LED into digital port D4 (or change PORT below). Full
-brightness fading only works on a PWM-capable socket (D3, D5, D6 on most
-GrovePi+ boards) — on other digital sockets `set_brightness` still works, it
-is just effectively on/off.
+Wiring: plug the LED into digital port D5 (or change PORT below). D5 is
+PWM-capable, which the fade below relies on — full brightness fading only
+works on a PWM-capable socket (D3, D5, D6 on most GrovePi+ boards); on other
+digital sockets `set_brightness` still works, it is just effectively on/off.
 
 Run:
     python examples/led.py
@@ -13,7 +13,7 @@ import asyncio
 
 from groveyard import Board, DigitalPort, Led
 
-PORT = DigitalPort.D4
+PORT = DigitalPort.D5
 
 
 async def main() -> None:
