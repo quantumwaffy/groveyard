@@ -6,12 +6,12 @@ in-memory `FakeTransport`, see [Testing without hardware](https://quantumwaffy.g
 every script here uses `Board.on_i2c()` and needs an actual board and the
 actual Grove module plugged in.
 
-> [!WARNING]
-> These examples are exactly what the README's real-hardware warning is
-> about: the library has not yet been confirmed against physical hardware.
-> Running these is how that gets confirmed — please
+> [!NOTE]
+> Every script here has been run end to end against a physical GrovePi+
+> board — see the README's real-hardware note. If you hit anything
+> unexpected on your own board, please
 > [open an issue](https://github.com/quantumwaffy/groveyard/issues) with
-> what you see, good or bad.
+> what you see.
 
 ## Setup
 

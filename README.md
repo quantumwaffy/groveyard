@@ -22,13 +22,14 @@
 ---
 
 > [!NOTE]
-> **Confirmed on real hardware.** The core connection — the firmware
-> handshake, and the RGB LCD — has been verified against a physical
+> **Confirmed on real hardware.** Every driver — `Button`, `LightSensor`,
+> `SoundSensor`, `Potentiometer`, `Led`, `Buzzer`, `Relay`, `Dht`,
+> `Ultrasonic`, and `RgbLcd` — has been run end to end against a physical
 > GrovePi+ board, on top of the 175-test suite that runs against the
 > in-memory
 > [`FakeTransport`](https://quantumwaffy.github.io/groveyard/guides/testing/).
-> Individual sensor drivers are still lightly exercised in the wild — if you
-> try one, feedback and contributions are welcome:
+> If you hit anything unexpected on your own board, feedback and
+> contributions are welcome:
 > [open an issue](https://github.com/quantumwaffy/groveyard/issues) or a PR.
 
 Many concurrent tasks can share one I2C bus and one stateful device without
@@ -109,9 +110,9 @@ Full write-up, with sequence diagrams:
 ## Examples
 
 [`examples/`](examples/README.md) has one small, runnable script per module — real
-hardware, not the fake transport. If you have a GrovePi+ on hand, this is
-also how you can help confirm the library actually works on real silicon;
-see the warning at the top of this file.
+hardware, not the fake transport. If you have a GrovePi+ on hand, this is also
+a good way to see each driver in action; see the note at the top of this
+file for what has already been confirmed to work.
 
 ## Testing without a Raspberry Pi
 

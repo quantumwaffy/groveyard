@@ -11,8 +11,8 @@ changes to the public API.
 
 ## [0.1.2] - 2026-08-09
 
-Initial release: the full async driver stack for a GrovePi+ starter kit,
-confirmed against a physical GrovePi+ board.
+Initial release: the full async driver stack for a GrovePi+ starter kit.
+Every driver has been run end to end against a physical GrovePi+ board.
 
 ### Added
 
@@ -51,9 +51,8 @@ confirmed against a physical GrovePi+ board.
 ### Fixed during development (pre-release)
 
 Everything below was found and fixed before this first public release —
-several of them by testing against a physical GrovePi+ board, which is also
-what this release confirms works end to end (the firmware handshake and the
-RGB LCD).
+several of them by testing against a physical GrovePi+ board, against which
+every driver in this release has now been confirmed to work end to end.
 
 - A DHT reading that failed its sanity check (`NaN` or out-of-range) was
   raised immediately instead of being retried like every other not-ready
@@ -102,8 +101,8 @@ RGB LCD).
   fake shaped exactly like `smbus2.i2c_msg` (a `MagicMock` cannot reproduce
   this class of bug, since it doesn't support the buffer protocol the way a
   real `ctypes.Structure` does). Confirmed fixed against the physical board:
-  the firmware-version handshake and the RGB LCD both now complete
-  correctly end to end.
+  every driver, from the firmware-version handshake through all ten device
+  modules, now completes correctly end to end.
 
 See the [architecture documentation](https://quantumwaffy.github.io/groveyard/architecture/)
 for the reasoning behind all of the above.
