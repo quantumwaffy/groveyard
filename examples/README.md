@@ -67,7 +67,7 @@ one module in isolation.
 
 | Script | Modules needed | Ports |
 |---|---|---|
-| `traffic_light.py` | 3× LED, Buzzer, RGB LCD | red `D3`, yellow `D5`, green `D6`, buzzer `D4`, LCD on the I2C port |
+| `traffic_light.py` | 3× LED, Buzzer, RGB LCD | red `D3`, yellow `D6`, green `D5`, buzzer `D4`, LCD on the I2C port |
 
 `traffic_light.py` runs a red/yellow/green cycle with a pedestrian crossing
 on the LCD, and doubles as a live demo of the concurrency model: fading the

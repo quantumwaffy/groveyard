@@ -8,7 +8,7 @@ fading the green LED out while the buzzer counts down is two *different*
 devices, so it runs as a real `asyncio.TaskGroup`: no manual coordination
 needed, only the bus itself briefly serialises the two transactions.
 
-Wiring: red on D3, yellow on D5, green on D6 — the three PWM-capable sockets,
+Wiring: red on D3, yellow on D6, green on D5 — the three PWM-capable sockets,
 which is what lets yellow fade in and green fade out instead of just
 switching. Buzzer on D4. RGB LCD on the I2C port. Change the PORT constants
 below if you wired it differently.
@@ -22,8 +22,8 @@ import asyncio
 from groveyard import Board, Buzzer, DigitalPort, Led, RgbLcd
 
 RED_PORT = DigitalPort.D3
-YELLOW_PORT = DigitalPort.D5
-GREEN_PORT = DigitalPort.D6
+YELLOW_PORT = DigitalPort.D6
+GREEN_PORT = DigitalPort.D5
 BUZZER_PORT = DigitalPort.D4
 
 CYCLES = 2
