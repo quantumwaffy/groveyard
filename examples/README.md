@@ -58,3 +58,18 @@ loop forever. Press `Ctrl-C` at any point — actuators (LED, buzzer, relay)
 are driven back to *off* on exit either way, even on an error or a
 keyboard interrupt, because `Board`/`Device` are used as async context
 managers.
+
+## Combined scenes
+
+Unlike the scripts above, these need several modules wired in *at once* —
+they exist to show devices working together as one scene, not to exercise
+one module in isolation.
+
+| Script | Modules needed | Ports |
+|---|---|---|
+| `traffic_light.py` | 3× LED, Buzzer, RGB LCD | red `D3`, yellow `D5`, green `D6`, buzzer `D4`, LCD on the I2C port |
+
+`traffic_light.py` runs a red/yellow/green cycle with a pedestrian crossing
+on the LCD, and doubles as a live demo of the concurrency model: fading the
+green LED out while the buzzer counts down is two different devices running
+as one `asyncio.TaskGroup`, with no manual coordination needed between them.
